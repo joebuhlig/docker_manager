@@ -39,6 +39,7 @@ export default Ember.Controller.extend({
 
     upgradeAll: function () {
       console.log('upgradeAll');
+      console.log(this);
     }
   }
 });
