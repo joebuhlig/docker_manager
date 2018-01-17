@@ -1,13 +1,14 @@
 class DockerManager::Upgrader
 
-  def initialize(user_id, repo, from_version)
+  # @param repos Either a single or an array of GitRepo objects
+  def initialize(user_id, repos, from_version)
     @user_id = user_id
-    @repo = repo
+    @repos = (Array === repos) ? repos : [repos]
     @from_version = from_version
   end
 
   def reset!
-    @repo.stop_upgrading
+    @repos.each(&:stop_upgrading)
     clear_logs
     percent(0)
   end
@@ -36,7 +37,8 @@ class DockerManager::Upgrader
   end
 
   def upgrade
-    return unless @repo.start_upgrading
+    return unless @repos.present?
+    return unless @repos.map(&:start_upgrading).all?
 
     percent(0)
 
@@ -101,7 +103,10 @@ class DockerManager::Upgrader
 
     # HEAD@{upstream} is just a fancy way how to say origin/master (in normal case)
     # see http://stackoverflow.com/a/12699604/84283
-    run("cd #{@repo.path} && git fetch --tags && git reset --hard HEAD@{upstream}")
+    @repos.each_with_index do |repo, i|
+      run("cd #{repo.path} && git fetch --tags && git reset --hard HEAD@{upstream}")
+      percent(0 + i * (20 / @repos.length))
+    end
     percent(20)
     run("bundle install --deployment --without test --without development")
     percent(30)
@@ -128,7 +133,7 @@ class DockerManager::Upgrader
     STDERR.puts(ex.inspect)
     raise
   ensure
-    @repo.stop_upgrading
+    @repos.each(&:stop_upgrading)
   end
 
   def publish(type, value)

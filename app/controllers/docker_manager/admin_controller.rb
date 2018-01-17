@@ -47,10 +47,7 @@ module DockerManager
     end
 
     def repos
-      repos = [DockerManager::GitRepo.new(Rails.root.to_s, 'discourse')]
-      Discourse.plugins.each do |p|
-        repos << DockerManager::GitRepo.new(File.dirname(p.path), p.name)
-      end
+      repos = repos_list
       repos.map! do |r|
         result = {name: r.name, path: r.path, branch: r.branch }
         if r.valid?
@@ -92,6 +89,15 @@ module DockerManager
       render plain: "OK"
     end
 
+    def upgrade_multiple
+      repos = params[:paths].split(',').map {|path| DockerManager::GitRepo.new(path) }
+      Thread.new do
+        upgrader = Upgrader.new(current_user.id, repos, params[:version]) #here, version is a concat of each repo version
+        upgrader.upgrade
+      end
+      render text: "OK"
+    end
+
     def reset_upgrade
       repo = DockerManager::GitRepo.new(params[:path])
       upgrader = Upgrader.new(current_user.id, repo, params[:version])
@@ -130,5 +136,14 @@ module DockerManager
       render plain: "Leaking memory on #{Process.pid}"
     end
 
+    private
+
+    def repos_list
+      repos = [DockerManager::GitRepo.new(Rails.root.to_s, 'discourse')]
+      Discourse.plugins.each do |p|
+        repos << DockerManager::GitRepo.new(File.dirname(p.path), p.name)
+      end
+      repos
+    end
   end
 end
