@@ -35,6 +35,10 @@ export default Ember.Controller.extend({
   actions: {
     dismiss: function () {
       this.set("bannerDismissed", true);
+    },
+
+    upgradeAll: function () {
+      console.log('upgradeAll');
     }
   }
 });

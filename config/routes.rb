@@ -6,6 +6,7 @@ DockerManager::Engine.routes.draw do
   get "admin/docker/progress" => "admin#progress"
   get "admin/docker/ps" => "admin#ps"
   post "admin/docker/upgrade" => "admin#upgrade"
+  post "admin/docker/upgrade-all" => "admin#upgrade_multiple"
   delete "admin/docker/upgrade" => "admin#reset_upgrade"
   get "admin/docker/runaway_cpu" => "admin#runaway_cpu"
   get "admin/docker/runaway_mem" => "admin#runaway_mem"
